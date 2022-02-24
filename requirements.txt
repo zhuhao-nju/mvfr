@@ -1,0 +1,15 @@
+argparse
+face-alignment
+matplotlib
+numpy
+opencv-python==4.5.1.48
+openmesh
+Pillow
+scipy==1.5.4
+torch==1.6.0
+torchvision==0.7.0
+trimesh
+tqdm
+
+
+
