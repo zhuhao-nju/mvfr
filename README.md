@@ -7,7 +7,7 @@ In this paper, we propose a novel architecture to recover extremely detailed 3D 
 ### Citation
 ```
 @InProceedings{xiao2022detailed,
-author = {Xiao, Yunze and Zhu, Hap and Yang, Haotian and Diao, Zhengyu and Lu, Xiangju and Cao, Xun},
+author = {Xiao, Yunze and Zhu, Hao and Yang, Haotian and Diao, Zhengyu and Lu, Xiangju and Cao, Xun},
 title = {Detailed Facial Geometry Recovery from Multi-View Images by Learning an Implicit Function},
 booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
 year = {2022}
