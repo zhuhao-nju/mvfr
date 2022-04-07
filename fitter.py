@@ -7,8 +7,8 @@ from scipy.linalg import orthogonal_procrustes
 
 class fitter:
     def __init__(self, 
-                 fn_params = "./facescape_predef/params.json", 
-                 fn_core = "./facescape_predef/core_847_50_52.npy"):
+                 fn_params = "./predefine_data/factor_847_50_52.json", 
+                 fn_core = "./predefine_data/core_847_50_52.npy"):
         
         # read params
         with open(fn_params, 'r') as f:

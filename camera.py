@@ -18,7 +18,6 @@ class CamPara():
         R = Rt[:, :3]
         t = Rt[:, 3]
         self.cam_center = -np.dot(R.transpose(), t)
-
         # compute projection and inv-projection matrix
         self.proj_mat = np.dot(K, Rt)
 

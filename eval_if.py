@@ -16,7 +16,7 @@ import torch.backends.cudnn as cudnn
 cudnn.benchmark = True
 
 # initialization
-opt = BaseOptions(useJupyterNotebookArgs=[]).parse()
+opt = BaseOptions().parse()
 device = torch.device("cuda:%d"%(opt.cuda_id))
 print(device, "is available")
 """
@@ -25,9 +25,10 @@ random.seed(opt.seed)
 torch.manual_seed(opt.seed)
 torch.cuda.manual_seed(opt.seed)
 """
+mod = "eval" # train or eval here
 # dataset
 with open(opt.if_dataroot + "/id.json", 'r') as f:
-    EVAL_ID_LIST = json.load(f)["eval"]
+    EVAL_ID_LIST = json.load(f)[mod]
 eval_set = FSIFDataset(opt=opt, id_list=EVAL_ID_LIST, mod="eval")
 eval_loader = DataLoader(eval_set, batch_size=opt.if_evaling_batch_size, num_workers=4, shuffle=False)
 model = ConvIFNet(opt=opt, loss_func=select_loss_func(opt.if_loss_func), mod="eval").to(device)
@@ -86,7 +87,7 @@ with torch.no_grad():
         for b in range(opt.if_evaling_batch_size):
             v = torch.zeros(opt.d_size, opt.uv_size, opt.uv_size)
             v[(points_index[b,0,:] + opt.d_size//2, points_index[b,1,:], points_index[b,2,:])] = preds[b]
-            np.save(opt.if_dataroot + "/volume/eval/ori_volume_%s.npy" % (location[b]), v.numpy().astype(np.float32))
+            np.save(opt.if_dataroot + f"/volume/{mod}/ori_volume_%s.npy" % (location[b]), v.numpy().astype(np.float32))
             volume.append(v)
         volume = torch.stack(volume, dim=0)
         print(location)

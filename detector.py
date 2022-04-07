@@ -13,6 +13,8 @@ class detector:
         self.img_dir = img_dir
         self.idx_list = idx_list
         self.img_format = img_format
+        # {max_shape of image} * 0.2
+        self.stardard_shape = 4344 * 0.2
         
         with open(fn_params, 'r') as f:
             cam_params = json.load(f)
@@ -61,30 +63,38 @@ class detector:
         return errors.ravel()
 
     # detect 2d key points for multi-view images using face_alignment
-    def get_kp2d(self, sc_ratio = 0.1):
+    def get_kp2d(self, sc_ratio = 0.2):
         kp2d_list = []
         #for idx in tqdm.tqdm(self.idx_list):
         for i, idx in enumerate(self.idx_list):
-            src_img = cv2.imread(self.img_dir + "%s%s" % (idx, self.img_format[i]))
+            src_img = cv2.imread(self.img_dir + "/%s%s" % (idx, self.img_format[i]))
             src_img = cv2.cvtColor(src_img, cv2.COLOR_BGR2RGB)
+            
+            max_shape = max(src_img.shape[0], src_img.shape[1])
+            # reshape img size to a stardard shape
+            sc_ratio = self.stardard_shape / max_shape
             src_img_sc = cv2.resize(src_img, (int(src_img.shape[1]*sc_ratio), 
                                               int(src_img.shape[0]*sc_ratio)))
-            preds = self.fa.get_landmarks(src_img_sc)
-
+            preds, scores, _ = self.fa.get_landmarks(src_img_sc,  return_landmark_score=True)
+            #print(idx, np.mean(scores))
             if preds is None:
                 kp2d_list.append([])
             elif len(preds) != 1:
+                kp2d_list.append([])
+            elif np.mean(scores) < 0.75:
                 kp2d_list.append([])
             else:
                 kp2d_list.append(preds[0]/sc_ratio)
             
             # only for debug
-            if self.debug is True:
+            #if self.debug is True:
+            if True:
                 src_img_draw = src_img_sc.copy()
                 for kp in preds[0]:
+                    #print(kp)
                     cv2.circle(src_img_draw, tuple(kp), 5, (255, 0, 0), -1)
                 src_img_draw = cv2.cvtColor(src_img_draw, cv2.COLOR_BGR2RGB)
-                cv2.imwrite("./test_data/tmp_%s.png" % idx, src_img_draw)
+                cv2.imwrite("./temp/tmp_%s.png" % idx, src_img_draw)
             
         return kp2d_list
     

@@ -20,7 +20,7 @@ import cv2
 import torch.backends.cudnn as cudnn
 cudnn.benchmark = True
 
-opt = BaseOptions(useJupyterNotebookArgs=[]).parse()
+opt = BaseOptions().parse()
 device = torch.device("cuda:%d"%(opt.cuda_id))
 # dataset
 with open(opt.reg_dataroot + "/id.json", 'r') as f:

@@ -9,20 +9,15 @@ class BaseOptions():
         self.useJupyterNotebookArgs = useJupyterNotebookArgs
 
     def initialize(self, parser):
-        """ 
-        Changed name
-        general         =>  +if_
-        uv_size         ->  (half size)
-        movement_num    ->  d_size
-        num_sample_inout->  points_num
-        """
-
-
 
         # global defination
         g_global = parser.add_argument_group('Global')
         g_global.add_argument('--seed', type=int, default=1, help='random seed')
         g_global.add_argument('--cuda_id', type=int, default=0, help='cuda id')
+        
+        # Dataset related
+        g_dataset = parser.add_argument_group('Dataset')
+        g_dataset.add_argument('--facescape_dataroot', type=str, default=r'/media/xyz/RED31/share3/facescape_mview/fsmview_trainset', help='facescape dataset dataroot including mesh and image')
 
         # UVD params
         g_uvd = parser.add_argument_group('UVD')
@@ -32,8 +27,7 @@ class BaseOptions():
 
         # Base Mesh Fitting related
         g_fit = parser.add_argument_group('Base Mesh Fitting')
-        #g_fit.add_argument('--fit_dataroot', type=str, default=r'H:\mvfr_released\data', help='path to fit (data folder)')
-        g_fit.add_argument('--fit_dataroot', type=str, default=r'/media/xyz/RED31/mvfr_released/demo', help='path to fit (data folder)')
+        g_fit.add_argument('--fit_dataroot', type=str, default=r'/media/xyz/RED31/mvfr_released/dev', help='path to fit (data folder)')
         
         # Implicit function Sampling related
         g_sample = parser.add_argument_group('Implicit function Sampling')
@@ -42,9 +36,9 @@ class BaseOptions():
 
         # Implicit function Dataset related
         g_if_data = parser.add_argument_group('Implicit function Dataset')
-        g_if_data.add_argument('--if_dataroot', type=str, default=r'/media/xyz/RED31/mvfr_released/demo', help='path to images (data folder)')
+        g_if_data.add_argument('--if_dataroot', type=str, default=r'/media/xyz/RED31/mvfr_released/dev', help='path to images (data folder)')
         g_if_data.add_argument('--if_view_num', type=int, default=10, help='view number')
-        g_if_data.add_argument('--if_image_downsample_scale', type=float, default=0.5, help='input images downsample scale')
+        g_if_data.add_argument('--if_image_downsample_scale', type=float, default=1, help='input images downsample scale')
         g_if_data.add_argument('--if_feature_downsample_scale', type=float, default=0.5, help='feature downsample scale in feature extractor')
         
         # Implicit function Training related
@@ -52,12 +46,12 @@ class BaseOptions():
         g_if_train.add_argument('--if_training_batch_size', type=int, default=1, help='batch size')
         g_if_train.add_argument('--if_learning_rate', type=float, default=1e-3, help='learning rate')
         g_if_train.add_argument('--if_training_epoch', type=int, default=200, help='end epoch to train')
-        g_if_train.add_argument('--if_model_path', type=str, default="../model", help='path to save model')
+        g_if_train.add_argument('--if_model_path', type=str, default="./checkpoints", help='path to save model')
         
         # Implicit function Evaling related
         g_if_eval = parser.add_argument_group('Implicit  function Evaling')
         g_if_eval.add_argument('--if_evaling_batch_size', type=int, default=1, help='input batch size')
-        g_if_eval.add_argument('--if_load_model_path', type=str, default="../model", help='path to load model')
+        g_if_eval.add_argument('--if_load_model_path', type=str, default="./predefine_data/checkpoint_if.pkl", help='path to load model')
         g_if_eval.add_argument('--if_save_vt', type=bool, default=True, help='whether to save vertex texture during meshing') # TODO: use it in coding
 
         # Implicit function Model related
@@ -69,29 +63,23 @@ class BaseOptions():
 
         # Regularization Dataset related
         g_reg_data = parser.add_argument_group('Regularization Dataset')
-        g_reg_data.add_argument('--reg_dataroot', type=str, default=r'/media/xyz/RED31/mvfr_released/demo', help='path to data folder')
+        g_reg_data.add_argument('--reg_dataroot', type=str, default=r'/media/xyz/RED31/mvfr_released/dev', help='path to data folder')
         # Regularization Training related
         g_reg_train = parser.add_argument_group('Regularization Training')
-        g_reg_train.add_argument('--reg_training_batch_size', type=int, default=1, help='batch size')
-        g_reg_train.add_argument('--reg_learning_rate', type=float, default=1e-3, help='learning rate')
+        g_reg_train.add_argument('--reg_training_batch_size', type=int, default=2, help='batch size')
+        g_reg_train.add_argument('--reg_learning_rate', type=float, default=1e-4, help='learning rate')
         g_reg_train.add_argument('--reg_training_epoch', type=int, default=25, help='end epoch to train')
-        g_reg_train.add_argument('--reg_model_path', type=str, default="../model", help='path to save model')
+        g_reg_train.add_argument('--reg_model_path', type=str, default="./checkpoints", help='path to save model')
 
         # Regularization Evaling related
         g_reg_eval = parser.add_argument_group('Regularization Evaling')
         g_reg_eval.add_argument('--reg_evaling_batch_size', type=int, default=1, help='input batch size')
-        g_reg_eval.add_argument('--reg_load_model_path', type=str, default="../model", help='path to load model')
+        g_reg_eval.add_argument('--reg_load_model_path', type=str, default="./predefine_data/checkpoint_reg.pkl", help='path to load model')
 
         # Texture related
         g_tex = parser.add_argument_group('Texture Generating')
         g_tex.add_argument('--tex_uv_size', type=int, default=1024, help='texture uv size')
         
-        # Pipeline evaling related
-        g_pipe = parser.add_argument_group('Pipeline')
-        g_pipe.add_argument('--pipe_batch_size', type=int, default=1, help='batch size for pipeline evaling. Only support 1 now.')
-
-
-
         return parser
 
     def gather_options(self):
@@ -107,7 +95,6 @@ class BaseOptions():
     def parse(self):
         opt = self.gather_options()
         self.print_options(opt)
-        # TODO: use save_options
         #self.save_options(opt)
         return opt
      

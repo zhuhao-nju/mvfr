@@ -37,6 +37,10 @@ class FSIFDataset(Dataset):
         print("id list length: %d" %len(self.id_list))
         print("fsDataset: self.feature_downsample_scale: %f | self.image_downsample_scale: %f" 
               %(self.feature_downsample_scale, self.image_downsample_scale))
+        
+        # make gaussian table for query
+        self.gaussian_table = gaussian(np.linspace(0, 2, self.d_size), 1, 0.05)
+
 
         # init fetch something
         self._init_fetch()
@@ -103,7 +107,7 @@ class FSIFDataset(Dataset):
         mask_index_length = mask_index[0].shape[0]
         # four times for more points
         #surface_sample_index = np.array(random.sample(range(mask_index_length), 4 * self.num_sample_inout))
-        surface_sample_index = np.random.choice(range(mask_index_length), 4 * self.num_sample_inout, replace=True)
+        surface_sample_index = np.random.choice(range(mask_index_length), 4 * self.points_num, replace=True)
         h = mask_index[0][surface_sample_index]
         w = mask_index[1][surface_sample_index]
         # [4*N, 3] add some gaussian movement along normal => "h, w, d" order
@@ -111,11 +115,11 @@ class FSIFDataset(Dataset):
             , axis=1)
         # 2.2 uniform random based TODO: real uniform random(in 3 dim) 
         #random_sample_index = np.array(random.sample(range(mask_index_length), self.num_sample_inout // 4))
-        random_sample_index = np.random.choice(range(mask_index_length), self.num_sample_inout // 4, replace=True)
+        random_sample_index = np.random.choice(range(mask_index_length), self.points_num // 4, replace=True)
         h2 = mask_index[0][random_sample_index]
         w2 = mask_index[1][random_sample_index]
         # [N//4, 3] => "h, w, d" order
-        random_points = np.stack([h2, w2, np.random.rand(random_sample_index.shape[0]) * self.movement_num + (-self.movement_num/2)] 
+        random_points = np.stack([h2, w2, np.random.rand(random_sample_index.shape[0]) * self.d_size + (-self.d_size/2)] 
             , axis=1)
         # concat
         sample_points = np.concatenate([surface_points, random_points], 0)
@@ -138,14 +142,14 @@ class FSIFDataset(Dataset):
         print("nin %d; nout %d"%(nin, nout))
         """
 
-        if (nin > self.num_sample_inout // 2) and (nout > self.num_sample_inout // 2):
-            inside_points = inside_points[:self.num_sample_inout // 2]
-            outside_points = outside_points[:self.num_sample_inout // 2]
+        if (nin > self.points_num // 2) and (nout > self.points_num // 2):
+            inside_points = inside_points[:self.points_num // 2]
+            outside_points = outside_points[:self.points_num // 2]
         elif nin > nout:
             inside_points = inside_points
-            outside_points = outside_points[:(self.num_sample_inout - nin)]
+            outside_points = outside_points[:(self.points_num - nin)]
         else:
-            inside_points = inside_points[:(self.num_sample_inout - nout)]
+            inside_points = inside_points[:(self.points_num - nout)]
             outside_points = outside_points
 
         # [3, N]
@@ -160,7 +164,7 @@ class FSIFDataset(Dataset):
         # [3, N]
         points = points.T
         # normalize displacements # [-1~1]
-        displacements = m4 / self.movement_num * 2
+        displacements = m4 / self.d_size * 2
 
         #save_sampled_points('../data/sampled_points_{}_{}.ply'.format(person_id, expression_id), points, labels)
 
@@ -209,24 +213,28 @@ class FSIFDataset(Dataset):
         cams = []
         images = []
         for index in indices:
+            image = read_image(
+                self.mainpath + "/images/{}/{}/{}.jpg".format(person_id, expression_id, index)
+            )
+            h = image.shape[0]
+            w = image.shape[1]
+            if h > w:
+                # transpose
+                image = transpose_image(image)
+            # image downsample
+            image = resize_image(image, scale=self.image_downsample_scale)
+            
             K = np.array(cams_dict[str(index) + "_K"])
             Rt = np.array(cams_dict[str(index) + "_Rt"])
             # give to cams
             cam = read_camera(K, Rt)
-            # transpose
-            cam = transpose_camera(cam)
+            if h > w:
+                # transpose
+                cam = transpose_camera(cam)
             # feature downsample
             cam = resize_camera(cam, scale=self.feature_downsample_scale)
             # image downsample
             cam = resize_camera(cam, scale=self.image_downsample_scale)
-            
-            image = read_image(
-                self.mainpath + "/images/{}/{}/{}.jpg".format(person_id, expression_id, index)
-            )
-            # transpose
-            image = transpose_image(image)
-            # image downsample
-            image = resize_image(image, scale=self.image_downsample_scale)
             
             cams.append(cam)
             images.append(image)

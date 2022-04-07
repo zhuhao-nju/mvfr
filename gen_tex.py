@@ -16,13 +16,14 @@ from scipy.ndimage import convolve
 from options import *
 from utils import *
 
-def get_tex_data(dataroot, pe_id):
+def get_tex_data(dataroot, mask, pe_id):
     
     p_id = pe_id.split("_")[0]
     e_id = pe_id.split("_")[1]
     
     pos_map = read_npy(dataroot + "/pred/reg_map/pos_map_{}.npy".format(pe_id))
     norm_map = read_npy(dataroot + "/maps/eval/norm_map/norm_map_{}.npy".format(pe_id))
+    
     with open(dataroot + "/select_dict.json", 'r') as f:
         select_dict = json.load(f)
     indices = select_dict[str(int(p_id))][str(int(e_id))]
@@ -69,6 +70,9 @@ def gen_tex(opt, pos_map, norm_map, images, cams):
     nearest_index = np.where(np.abs(pos_map_updated_linear_norm - pos_map_updated_nearest_norm) > thres)
     pos_map_updated = pos_map_updated_linear
     pos_map_updated[nearest_index[0], nearest_index[1], :] = pos_map_updated_nearest[nearest_index[0], nearest_index[1], :]
+    
+    pos_map_mask = np.sum(np.abs(pos_map_updated), axis=-1)
+    pos_map_mask = np.where(pos_map_mask==0, 0, 1)
     
     # TODO: use pos_map to get norm_map
     norm_map_updated = cv2.resize(
@@ -133,24 +137,32 @@ def gen_tex(opt, pos_map, norm_map, images, cams):
     # sum([V, H, W, 3] * [V, H, W, 1], axis=0)
     texture_blended = np.sum(textures * weights_normalized[:,:,:,np.newaxis], axis=0)
     
+    # add mask in case world coor (0,0) multiply norm_conv 
+    texture_blended = texture_blended * pos_map_mask[:,:,np.newaxis]
+    
     return texture_blended
 
 def relocate(image):
-    """ adjust image for dpmap prediction """
+    """ adjust image for dpmap prediction; only support 1024 tex"""
     image_crop = image[300-288:1250-288,550-512:1500-512,:]
     image_relocated = cv2.resize(image_crop, (1024, 1024), interpolation=cv2.INTER_LINEAR)
     
     return image_relocated
 
-opt = BaseOptions(useJupyterNotebookArgs=[]).parse() # TODO: delete args here
+opt = BaseOptions().parse()
 with open(opt.reg_dataroot + "/id.json", 'r') as f:
-    EVAL_ID_LIST = json.load(f)["eval"]
+    EVAL_ID_LIST = json.load(f)["eval"][:100]
+
+mask = cv2.imread(opt.reg_dataroot + '/facial_mask.png').astype(np.bool)[200-128:200+128, 256-128:256+128, 0]
+#mask_raw = cv2.imread(opt.reg_dataroot + '/facial_mask_raw.png')
+#mask_pred = cv2.resize(mask_raw, (2084, 2048), interpolation=cv2.INTER_NEAREST)[800-512:800+512, 1024-512:1024+512, 0].astype(np.bool)
 
 for face_id in EVAL_ID_LIST:
-    data = get_tex_data(opt.reg_dataroot, face_id)
+    data = get_tex_data(opt.reg_dataroot, mask, face_id)
     tex = gen_tex(opt, data["pos_map"], data["norm_map"], data["images"], data["cams"])
     print(f"Generating {face_id} texture")
     #plt.figure(), plt.imshow(tex/255)
+    #tex = tex * mask_pred[:,:,np.newaxis]
     cv2.imwrite(opt.reg_dataroot + f"/pred/texture/texture_{face_id}.jpg", tex)
     tex_relocated = relocate(tex)
     cv2.imwrite(opt.reg_dataroot + f"/pred/texture_relocated/texture_{face_id}.jpg", tex_relocated)

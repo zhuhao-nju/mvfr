@@ -39,7 +39,7 @@ class FSRegDataset(Dataset):
         pos_map = read_npy(self.dataroot + "/maps/{}/pos_map/pos_map_{}.npy".format(self.mod, sample_id))
         if self.mod == "train":
             mv_map = read_npy(
-                self.mainpath + "/maps/{}/mv_map/mv_map_{}.npy".format(self.mod, sample_id)
+                self.dataroot + "/maps/{}/mv_map/mv_map_{}.npy".format(self.mod, sample_id)
             )
         Rt_scale = self.Rt_scale_dict[str(int(person_id))][str(int(expression_id))][0]
         displacement_scale = self.interval_scale / Rt_scale
