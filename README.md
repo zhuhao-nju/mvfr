@@ -25,7 +25,7 @@ year = {2022}
 We recommend to use `Python 3.6` for the following instruction
 * `pip install -r requirements.txt`
 
-Install `psbody-mesh` from [here](https://github.com/MPI-IS/mesh).
+Install `psbody-mesh` from [here](https://github.com/MPI-IS/mesh).  
 
 ### Download
 
@@ -47,7 +47,7 @@ Please download the meso model from [here](https://box.nju.edu.cn/f/11c90860dfc3
   
 Then we recommend to run the following scripts.
 * Building the structure of the data folder `python mkdirs.py` (You need set `dataroot=DATA_FOLDER` in `mkdirs.py`)
-* Processing images from FaceScape Dataset `python preprocess_images.py` (You can skip it if you use the data we offer). Before running, you should set the `dataroot` related args(`facescape_dataroot` as `FACESCAPE_DATA_FOLDER`  
+* Processing images from FaceScape Dataset `python preprocess_images.py` (You can skip it if you use the data we offer). Before running, you should set the `dataroot` related args(e.g. `facescape_dataroot` as `FACESCAPE_DATA_FOLDER`)  
 
 ##### Dataset metadata information
 * `select_dict.json` -- index of used images.  
@@ -78,7 +78,7 @@ Our method consists of several parts in the following order.
   lower `num_sample` in `eval_if.py` for lower GPU memory occupation
 * Run `python eval_reg.py` for post regularization  
 * Run `python gen_tex.py` for blended texture
-* Run `cd dpmap_pred && python dpmap_pred/main.py --input DATAFOLDER/pred/texture_relocated --output DATAFOLDER/pred/dp_map` for mesoscopic prediction  
+* Run `cd dpmap_pred && python main.py --input DATAFOLDER/pred/texture_relocated --output DATAFOLDER/pred/dp_map` for mesoscopic prediction  
  
 If you want to use dpmap to get mesh of mesoscopic prediction, set the folder in `dpmap_pred/scripts/dpmap2mesh.py` and run `python dpmap_pred/scripts/dpmap2mesh.py`. It may cost some time to generate results.
 
@@ -86,6 +86,8 @@ You can modifiy the config file `options.py` or use args `--ARGS` in command lik
 Before running, you should set the `dataroot` related args(`fit_dataroot`, `if_dataroot`, `reg_dataroot`) as `DATA_FOLDER`  
 
 ### Traning
+
+We recommend to use a GPU with high memory(>= 24GB) to train our model(implicit function learning stage). 
 
 Our method consists of several parts in the following order.
 * Run `python gen_maps.py` and edit `mod="train"` in `gen_maps.py` for generating base mesh
