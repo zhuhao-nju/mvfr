@@ -151,7 +151,7 @@ def relocate(image):
 
 opt = BaseOptions().parse()
 with open(opt.reg_dataroot + "/id.json", 'r') as f:
-    EVAL_ID_LIST = json.load(f)["eval"][:100]
+    EVAL_ID_LIST = json.load(f)["eval"]
 
 mask = cv2.imread(opt.reg_dataroot + '/facial_mask.png').astype(np.bool)[200-128:200+128, 256-128:256+128, 0]
 #mask_raw = cv2.imread(opt.reg_dataroot + '/facial_mask_raw.png')
